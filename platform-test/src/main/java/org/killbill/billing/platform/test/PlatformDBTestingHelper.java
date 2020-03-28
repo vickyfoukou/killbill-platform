@@ -78,6 +78,17 @@ public class PlatformDBTestingHelper {
                 log.info("Using PostgreSQL as the embedded database");
                 instance = new PostgreSQLEmbeddedDB();
             }
+        } else if("true".equals(System.getProperty(TEST_DB_PROPERTY_PREFIX + "mssql"))){
+            if(isUsingLocalInstance()){
+                log.info("Using SQL Server local database");
+                final String databaseName = System.getProperty(TEST_DB_PROPERTY_PREFIX + "localDb.database", "killbill");
+                final String username = System.getProperty(TEST_DB_PROPERTY_PREFIX + "localDb.username", "sa");
+                final String password = System.getProperty(TEST_DB_PROPERTY_PREFIX + "localDb.password", "password");
+                instance = new MySQLStandaloneDB(databaseName, username, password);
+            }else{
+                log.info("Using SQL Server as embedded database. Well, still runs on local instance though, given no form of embedded db support is available for SQL server");
+                instance = new MySQLEmbeddedDB();
+            }
         } else {
             if (isUsingLocalInstance()) {
                 log.info("Using MySQL local database");
