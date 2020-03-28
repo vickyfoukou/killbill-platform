@@ -23,6 +23,7 @@ import java.net.URI;
 import org.killbill.commons.embeddeddb.EmbeddedDB;
 import org.killbill.commons.embeddeddb.GenericStandaloneDB;
 import org.killbill.commons.embeddeddb.h2.H2EmbeddedDB;
+import org.killbill.commons.embeddeddb.mssql.MsSQLStandaloneDB;
 import org.killbill.commons.embeddeddb.mysql.MySQLStandaloneDB;
 import org.killbill.commons.embeddeddb.postgresql.PostgreSQLStandaloneDB;
 import org.killbill.commons.jdbi.guice.DaoConfig;
@@ -55,6 +56,8 @@ public class EmbeddedDBFactory {
             return new H2EmbeddedDB(databaseName, config.getUsername(), config.getPassword(), config.getJdbcUrl());
         } else if ("postgresql".equals(uri.getScheme())) {
             return new PostgreSQLStandaloneDB(databaseName, config.getUsername(), config.getPassword(), config.getJdbcUrl());
+        } else if ("sqlserver".equals(uri.getScheme())){
+            return new MsSQLStandaloneDB(databaseName, config.getUsername(), config.getPassword(), config.getJdbcUrl());
         } else {
             return new GenericStandaloneDB(databaseName, config.getUsername(), config.getPassword(), config.getJdbcUrl());
         }
