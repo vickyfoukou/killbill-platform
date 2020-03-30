@@ -251,6 +251,19 @@
             <artifactId>killbill-queue</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.kill-bill.commons</groupId>
+            <artifactId>mssql</artifactId>
+            <version>0.23.8-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kill-bill.commons</groupId>
+            <artifactId>mssql</artifactId>
+            <version>0.23.8-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
             <scope>compile</scope>
