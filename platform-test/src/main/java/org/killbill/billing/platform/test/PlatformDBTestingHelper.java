@@ -29,6 +29,8 @@ import org.killbill.billing.platform.jndi.ReferenceableDataSourceSpy;
 import org.killbill.commons.embeddeddb.EmbeddedDB;
 import org.killbill.commons.embeddeddb.GenericStandaloneDB;
 import org.killbill.commons.embeddeddb.h2.H2EmbeddedDB;
+import org.killbill.commons.embeddeddb.mssql.MsSQLEmbeddedDB;
+import org.killbill.commons.embeddeddb.mssql.MsSQLStandaloneDB;
 import org.killbill.commons.embeddeddb.mysql.MySQLEmbeddedDB;
 import org.killbill.commons.embeddeddb.mysql.MySQLStandaloneDB;
 import org.killbill.commons.embeddeddb.postgresql.PostgreSQLEmbeddedDB;
@@ -84,10 +86,10 @@ public class PlatformDBTestingHelper {
                 final String databaseName = System.getProperty(TEST_DB_PROPERTY_PREFIX + "localDb.database", "killbill");
                 final String username = System.getProperty(TEST_DB_PROPERTY_PREFIX + "localDb.username", "sa");
                 final String password = System.getProperty(TEST_DB_PROPERTY_PREFIX + "localDb.password", "password");
-                instance = new MySQLStandaloneDB(databaseName, username, password);
+                instance = new MsSQLStandaloneDB(databaseName, username, password);
             }else{
                 log.info("Using SQL Server as embedded database. Well, still runs on local instance though, given no form of embedded db support is available for SQL server");
-                instance = new MySQLEmbeddedDB();
+                instance = new MsSQLEmbeddedDB();
             }
         } else {
             if (isUsingLocalInstance()) {
