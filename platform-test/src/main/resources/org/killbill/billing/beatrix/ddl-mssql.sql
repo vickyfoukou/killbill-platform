@@ -1,120 +1,38 @@
-/*! SET storage_engine=INNODB */;
+/* SQL server doesn't have any object called serial, so first we want to create a new type alias for serial based on the int type */
 
-DROP TABLE IF EXISTS notifications;
-CREATE TABLE notifications (
-    record_id int identity(1,1 ) unique,
-    class_name varchar(256) NOT NULL,
-    event_json varchar(2048) NOT NULL,
-    user_token varchar(36),
-    created_date datetime NOT NULL,
-    creating_owner varchar(50) NOT NULL,
-    processing_owner varchar(50) DEFAULT NULL,
-    processing_available_date datetime DEFAULT NULL,
-    processing_state varchar(14) DEFAULT 'AVAILABLE',
-    error_count int /*! unsigned */ DEFAULT 0,
-    search_key1 bigint /*! unsigned */ default null,
-    search_key2 bigint /*! unsigned */ default null,
-    queue_name varchar(64) NOT NULL,
-    effective_date datetime NOT NULL,
-    future_user_token varchar(36),
-    PRIMARY KEY(record_id)
-) /*! CHARACTER SET utf8 COLLATE utf8_bin */;
-CREATE INDEX idx_comp_where ON notifications(effective_date, processing_state, processing_owner, processing_available_date);
-CREATE INDEX idx_update ON notifications(processing_state, processing_owner, processing_available_date);
-CREATE INDEX idx_get_ready ON notifications(effective_date, created_date);
-CREATE INDEX notifications_search_keys ON notifications(search_key2, search_key1);
+DROP TYPE IF EXISTS serial;
+CREATE TYPE serial FROM int NOT NULL;
 
-DROP TABLE IF EXISTS notifications_history;
-CREATE TABLE notifications_history (
-    record_id int identity(1,1 )  unique,
-    class_name varchar(256) NOT NULL,
-    event_json varchar(2048) NOT NULL,
-    user_token varchar(36),
-    created_date datetime NOT NULL,
-    creating_owner varchar(50) NOT NULL,
-    processing_owner varchar(50) DEFAULT NULL,
-    processing_available_date datetime DEFAULT NULL,
-    processing_state varchar(14) DEFAULT 'AVAILABLE',
-    error_count int /*! unsigned */ DEFAULT 0,
-    search_key1 bigint /*! unsigned */ default null,
-    search_key2 bigint /*! unsigned */ default null,
-    queue_name varchar(64) NOT NULL,
-    effective_date datetime NOT NULL,
-    future_user_token varchar(36),
-    PRIMARY KEY(record_id)
-) /*! CHARACTER SET utf8 COLLATE utf8_bin */;
-CREATE INDEX notifications_history_search_keys ON notifications_history(search_key2, search_key1);
+/* override the last_insert_id method to return the @@IDENTITY value as intended for SQL server */
+CREATE OR ALTER FUNCTION last_insert_id() RETURNS bigint AS
+    BEGIN
+        DECLARE @Result bigint;
+        SELECT @Result = @@IDENTITY
+        RETURN @Result
+    END
 
-DROP TABLE IF EXISTS bus_events;
-CREATE TABLE bus_events (
-    record_id int identity(1,1 )  unique,
-    class_name varchar(128) NOT NULL,
-    event_json varchar(2048) NOT NULL,
-    user_token varchar(36),
-    created_date datetime NOT NULL,
-    creating_owner varchar(50) NOT NULL,
-    processing_owner varchar(50) DEFAULT NULL,
-    processing_available_date datetime DEFAULT NULL,
-    processing_state varchar(14) DEFAULT 'AVAILABLE',
-    error_count int /*! unsigned */ DEFAULT 0,
-    search_key1 bigint /*! unsigned */ default null,
-    search_key2 bigint /*! unsigned */ default null,
-    PRIMARY KEY(record_id)
-) /*! CHARACTER SET utf8 COLLATE utf8_bin */;
-CREATE INDEX idx_bus_where ON bus_events(processing_state, processing_owner, processing_available_date);
-CREATE INDEX bus_events_tenant_account_record_id ON bus_events(search_key2, search_key1);
+/*We need a function/procedure that will alter the serial field of a given table to add an identity property to it since the serial fields require to be incremental in nature */
 
-DROP TABLE IF EXISTS bus_events_history;
-CREATE TABLE bus_events_history (
-    record_id int identity(1,1 )  unique,
-    class_name varchar(128) NOT NULL,
-    event_json varchar(2048) NOT NULL,
-    user_token varchar(36),
-    created_date datetime NOT NULL,
-    creating_owner varchar(50) NOT NULL,
-    processing_owner varchar(50) DEFAULT NULL,
-    processing_available_date datetime DEFAULT NULL,
-    processing_state varchar(14) DEFAULT 'AVAILABLE',
-    error_count int /*! unsigned */ DEFAULT 0,
-    search_key1 bigint /*! unsigned */ default null,
-    search_key2 bigint /*! unsigned */ default null,
-    PRIMARY KEY(record_id)
-) /*! CHARACTER SET utf8 COLLATE utf8_bin */;
-CREATE INDEX bus_events_history_tenant_account_record_id ON bus_events_history(search_key2, search_key1);
+IF OBJECT_ID ('update_serial_column', 'P') IS NOT NULL
+    DROP PROCEDURE update_serial_column;
 
-DROP TABLE IF EXISTS bus_ext_events;
-CREATE TABLE bus_ext_events (
-                                record_id int identity(1,1 ) unique,
-                                class_name varchar(128) NOT NULL,
-                                event_json varchar(2048) NOT NULL,
-                                user_token varchar(36),
-                                created_date datetime NOT NULL,
-                                creating_owner varchar(50) NOT NULL,
-                                processing_owner varchar(50) DEFAULT NULL,
-                                processing_available_date datetime DEFAULT NULL,
-                                processing_state varchar(14) DEFAULT 'AVAILABLE',
-                                error_count int /*! unsigned */ DEFAULT 0,
-                                search_key1 bigint /*! unsigned */ default null,
-                                search_key2 bigint /*! unsigned */ default null,
-                                PRIMARY KEY(record_id)
-) /*! CHARACTER SET utf8 COLLATE utf8_bin */;
-CREATE INDEX idx_bus_ext_where ON bus_ext_events(processing_state, processing_owner, processing_available_date);
-CREATE INDEX bus_ext_events_tenant_account_record_id ON bus_ext_events(search_key2, search_key1);
+CREATE OR ALTER PROCEDURE update_serial_column
+    @Table nvarchar(255), @Column varchar(255)
+    AS
+        DECLARE @tsql varchar(500)
+        SET @tsql = 'ALTER TABLE [' + @Table + '] DROP COLUMN [' + @Column + ']'
+        SELECT @tsql
+        SET @tsql = 'ALTER TABLE [' + @Table + '] ADD [' + @Column +'] serial identity(1,1)'
+        SELECT @tsql
+    END
 
-DROP TABLE IF EXISTS bus_ext_events_history;
-CREATE TABLE bus_ext_events_history (
-                                        record_id int identity(1,1 ) unique,
-                                        class_name varchar(128) NOT NULL,
-                                        event_json varchar(2048) NOT NULL,
-                                        user_token varchar(36),
-                                        created_date datetime NOT NULL,
-                                        creating_owner varchar(50) NOT NULL,
-                                        processing_owner varchar(50) DEFAULT NULL,
-                                        processing_available_date datetime DEFAULT NULL,
-                                        processing_state varchar(14) DEFAULT 'AVAILABLE',
-                                        error_count int /*! unsigned */ DEFAULT 0,
-                                        search_key1 bigint /*! unsigned */ default null,
-                                        search_key2 bigint /*! unsigned */ default null,
-                                        PRIMARY KEY(record_id)
-) /*! CHARACTER SET utf8 COLLATE utf8_bin */;
-CREATE INDEX bus_ext_events_history_tenant_account_record_id ON bus_ext_events_history(search_key2, search_key1);
+CREATE TRIGGER update_serial_column
+    ON DATABASE
+    FOR CREATE_TABLE
+    AS
+        DECLARE @table nvarchar(255);
+        DECLARE @column nvarchar(255);
+        SELECT @table = OBJECT_NAME(parent_object_id) FROM sys.objects WHERE sys.objects.name = OBJECT_NAME(@@PROCID)
+        SELECT @column = c.name from sys.columns c join sys.types t on c.user_type_id=t.user_type_id where c.object_id=OBJECT_ID(@table) AND TYPE_NAME(c.USER_TYPE_ID)="serial"
+        EXEC update_serial_column @Table = @table , @Column = @column
+    END
